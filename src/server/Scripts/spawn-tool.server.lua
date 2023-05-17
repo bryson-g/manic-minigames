@@ -1,14 +1,11 @@
+local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-local BaseTool = require(ReplicatedStorage.Shared.Modules.BaseTool)
+local BrickTool = require(ServerScriptService.Modules.Tools.BrickTool)
 
-local function main()
-	Players.PlayerAdded:Connect(function(player)
-		player.CharacterAdded:Connect(function()
-			task.wait(1)
-			BaseTool.new(player)
-		end)
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		BrickTool.new(player, ReplicatedStorage.Assets.Tools.Brick)
 	end)
-end
-main()
+end)
