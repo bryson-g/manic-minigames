@@ -9,6 +9,7 @@ function BaseTool.new(player, tool)
 
 	self.tool = tool:Clone()
 	self.player = player :: Player
+	self.eventRemote = ReplicatedStorage.Remotes.ToolEvents
 
 	self:_initTool()
 	return self
@@ -19,6 +20,8 @@ function BaseTool:_initTool()
 	motor.Part1 = self.tool.Base
 	motor.Part0 = self.player.Character[motor.Name]
 	self.tool.Parent = self.player.Backpack
+
+	self.eventRemote:FireClient(self.player, "CLIENT_SETUP", self.tool)
 end
 
 return BaseTool
