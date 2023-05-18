@@ -1,21 +1,4 @@
---[[
-
-
-
-
-
-
-    MAKE SYSTEM TO AUTO RUN FUNCS FOR EVERY ANIMATION EVENT, ON CLIENT !AND! SERVER
-    THIS IS WHERE ORIGINALITY WILL COME IN WITH UNIQUE CLASSES.
-
-
-    YOU'RE ON THE RIGHT TRACK.
-
-
-
-
-]]
-
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local BaseToolClient = {}
@@ -26,53 +9,72 @@ function BaseToolClient.new(tool)
 
 	self.tool = tool
 	self.tracks = {}
+	self.animEvents = {}
+	self.eventTypes = {
+		AnimationEvent = "AnimationEvent",
+		Default = "Default",
+	}
+	self.unequipTracks = true
 
-	self:_alwaysSetup()
+	self:_setupTracks()
+	self:_defaultAnimSetup()
 	return self
 end
 
-function BaseToolClient:_alwaysSetup()
+function BaseToolClient:_setupTracks()
 	for _, animation in self.tool.Animations:GetChildren() do
 		self.tracks[animation.Name] = Players.LocalPlayer.Character.Humanoid.Animator:LoadAnimation(animation)
 
 		for _, animEvent in animation:GetChildren() do
 			self.tracks[animation.Name]:GetMarkerReachedSignal(animEvent.Value):Connect(function(...)
-				if self[animEvent.Value] then
-					-- probably send event notice to server too
-					-- or maybe server can check animators loaded tracks and just use that?
-					self[animEvent.Value](...)
+				ReplicatedStorage.Remotes.ToolEvents:FireServer(animEvent.Value, ...)
+				if self.animEvents[animEvent.Value] then
+					self.animEvents[animEvent.Value](...)
 				end
 			end)
 		end
 	end
+end
 
-	self.tool.Activated:Connect(function()
-		self.tracks.Activated:Play()
-
-		if self.Activated then
-			self:Activated()
-		end
-	end)
-	self.tool.Equipped:Connect(function()
-		task.spawn(function()
-			self.tracks.Equipped:Play()
-			self.tracks.Equipped.Stopped:Wait()
-			self.tracks.Idle:Play()
-		end)
-
-		if self.Equipped then
-			self:Equipped()
-		end
-	end)
+function BaseToolClient:_defaultAnimSetup()
 	self.tool.Unequipped:Connect(function()
-		for _, track in self.tracks do
-			track:Stop()
-		end
-
-		if self.Unequipped then
-			self:Unequipped()
+		if self.unequipTracks then
+			for _, track in self.tracks do
+				track:Stop()
+			end
 		end
 	end)
+
+	for name, track in self.tracks do
+		if name == "Equipped" then
+			self.tool.Equipped:Connect(function()
+				track:Play()
+				if self.tracks.Idle then
+					track.Stopped:Wait()
+					self.tracks.Idle:Play()
+				end
+			end)
+		end
+
+		if name == "Idle" and not self.tracks.Equipped then
+			self.tool.Equipped:Connect(function()
+				track:Play()
+			end)
+		end
+	end
+end
+
+function BaseToolClient:Connect(type, name, callback)
+	if type == self.eventTypes.AnimationEvent then
+		self.animEvents[name] = callback
+		return {
+			Disconnect = function()
+				self.animEvents[name] = nil
+			end,
+		}
+	elseif type == self.eventTypes.Default then
+		return self.tool[name]:Connect(callback)
+	end
 end
 
 return BaseToolClient

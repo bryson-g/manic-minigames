@@ -7,11 +7,7 @@ function ClientToolLoader._init()
 	ReplicatedStorage.Remotes.ToolEvents.OnClientEvent:Connect(function(event, tool)
 		if event == "CLIENT_SETUP" then
 			local toolClient = _G.Modules.Tools:FindFirstChild(tool.Name .. "ToolClient")
-			if toolClient then
-				require(toolClient).new(tool)
-			else
-				require(_G.Modules.Tools.BaseToolClient).new(tool)
-			end
+			require(toolClient).new(tool)
 		end
 	end)
 end
