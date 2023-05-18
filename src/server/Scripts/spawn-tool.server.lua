@@ -6,6 +6,7 @@ local BrickTool = require(ServerScriptService.Modules.Tools.BrickTool)
 
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
+		task.wait(1)
 		BrickTool.new(player, ReplicatedStorage.Assets.Tools.Brick)
 	end)
 end)
