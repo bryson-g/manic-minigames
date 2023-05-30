@@ -87,10 +87,11 @@ function CameraController:Update(dt)
 		return
 	end
 
-	if UserInputService:GetLastInputType() == Enum.UserInputType.MouseMovement then
-		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+	else
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 	end
-	UserInputService.MouseIconEnabled = false
 
 	local camera = workspace.CurrentCamera
 	camera.CameraType = Enum.CameraType.Scriptable
