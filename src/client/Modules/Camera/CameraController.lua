@@ -87,10 +87,11 @@ function CameraController:Update(dt)
 		return
 	end
 
-	if UserInputService:GetLastInputType() == Enum.UserInputType.MouseMovement then
-		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+	else
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 	end
-	UserInputService.MouseIconEnabled = false
 
 	local camera = workspace.CurrentCamera
 	camera.CameraType = Enum.CameraType.Scriptable
@@ -114,6 +115,25 @@ end
 
 function CameraController:GetMaxOffset()
 	return self.maxOffset
+end
+
+function CameraController:ToggleCharacterLock(on)
+	local character = Players.LocalPlayer.Character
+
+	if on then
+		character.Humanoid.AutoRotate = false
+		self.lockConn = RunService.PreSimulation:Connect(function(dt)
+			local rootPart = character.HumanoidRootPart
+			local lv = workspace.CurrentCamera.CFrame.LookVector * 3000
+			rootPart.CFrame =
+				rootPart.CFrame:Lerp(CFrame.lookAt(rootPart.CFrame.Position, Vector3.new(lv.X, 0, lv.Z)), dt * 20)
+		end)
+	else
+		character.Humanoid.AutoRotate = true
+		if self.lockConn then
+			self.lockConn:Disconnect()
+		end
+	end
 end
 
 return CameraController
