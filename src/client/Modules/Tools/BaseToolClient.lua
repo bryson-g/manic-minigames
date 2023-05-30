@@ -8,8 +8,11 @@ function BaseToolClient.new(tool)
 	local self = setmetatable({}, BaseToolClient)
 
 	self.tool = tool
+
+	self.defaultEventsRegistry = {}
 	self.tracks = {}
 	self.animEvents = {}
+
 	self.eventTypes = {
 		AnimationEvent = "AnimationEvent",
 		Default = "Default",
@@ -37,7 +40,12 @@ function BaseToolClient:_setupTracks()
 end
 
 function BaseToolClient:_defaultAnimSetup()
+	self.tool.Equipped:Connect(function()
+		self.equipped = true
+	end)
+
 	self.tool.Unequipped:Connect(function()
+		self.equipped = false
 		if self.unequipTracks then
 			for _, track in self.tracks do
 				track:Stop()
@@ -61,6 +69,12 @@ function BaseToolClient:_defaultAnimSetup()
 				track:Play()
 			end)
 		end
+
+		if name == "Activated" then
+			self.defaultEventsRegistry["Activated"] = self.tool.Activated:Connect(function()
+				track:Play()
+			end)
+		end
 	end
 end
 
@@ -73,6 +87,11 @@ function BaseToolClient:Connect(type, name, callback)
 			end,
 		}
 	elseif type == self.eventTypes.Default then
+		local existingConn = self.defaultEventsRegistry[name]
+		if existingConn then
+			existingConn:Disconnect()
+			self.defaultEventsRegistry[name] = nil
+		end
 		return self.tool[name]:Connect(callback)
 	end
 end
